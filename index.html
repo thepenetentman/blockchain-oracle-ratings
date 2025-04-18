@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oracle Smart Contract Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --success-color: #22c55e;
+            --warning-color: #eab308;
+            --error-color: #ef4444;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #0f172a;
+                --card-background: #1e293b;
+                --text-primary: #f1f5f9;
+                --text-secondary: #94a3b8;
+                --border-color: #334155;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            text-align: center;
+            margin: 2rem 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .legend {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        .legend h3 {
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .legend-section {
+            padding: 1rem;
+            background: var(--background-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .oracle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .oracle-card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .oracle-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .metrics-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .network-deployment {
+            background: var(--background-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .contract-address {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .score {
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+        }
+
+        .score.excellent {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: var(--success-color);
+        }
+
+        .score.good {
+            background-color: rgba(234, 179, 8, 0.1);
+            color: var(--warning-color);
+        }
+
+        .score.developing {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--error-color);
+        }
+
+        .feature-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            margin: 0.25rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .feature-tag.active {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .feature-tag.inactive {
+            color: var(--text-secondary);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .oracle-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="page-title">Oracle Smart Contract Analysis</h1>
+        
+        <div class="legend">
+            <h3>Smart Contract Rating System</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px;">
+                <div class="legend-section">
+                    <strong style="color: var(--primary-color)">Security Score (40%)</strong>
+                    <ul style="list-style: none; padding-left: 0; margin-top: 10px;">
+                        <li>🛡️ Audit Results</li>
+                        <li>🔒 Security Features</li>
+                        <li>🔍 Vulnerability History</li>
+                    </ul>
+                </div>
+                <div class="legend-section">
+                    <strong style="color: var(--primary-color)">Implementation Quality (30%)</strong>
+                    <ul style="list-style: none; padding-left: 0; margin-top: 10px;">
+                        <li>📝 Code Quality</li>
+                        <li>🧪 Test Coverage</li>
+                        <li>📚 Documentation</li>
+                    </ul>
+                </div>
+                <div class="legend-section">
+                    <strong style="color: var(--primary-color)">Operational Metrics (30%)</strong>
+                    <ul style="list-style: none; padding-left: 0; margin-top: 10px;">
+                        <li>⚡ Gas Efficiency</li>
+                        <li>🔄 Uptime</li>
+                        <li>⏱️ Response Time</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="oracle-grid" class="oracle-grid"></div>
+    </div>
+
+    <script>
+        const ORACLE_CONTRACTS = {
+            chainlink: {
+                name: "Chainlink",
+                networks: {
+                    ethereum: {
+                        address: "0x514910771AF9Ca656af840dff83E8264EcF986CA",
+                        implementation: "0x2d8e4a1136a6a991E91FD6f4e36699Cf67606cA6",
+                        type: "Transparent Proxy",
+                        deploymentDate: "2017-09-19"
+                    },
+                    bsc: {
+                        address: "0x404460C6A5EdE2D891e8297795264fDe62ADBB75",
+                        implementation: "0x5e0a8B30D2c863AD5677D1B9743f10389e948960",
+                        type: "Transparent Proxy",
+                        deploymentDate: "2020-09-11"
+                    },
+                    polygon: {
+                        address: "0xb0897686c545045aFc77CF20eC7A532E3120E0F1",
+                        implementation: "0x2B8F5FE78d766E64da8FC699A58EcB27E3e9a95E",
+                        type: "Transparent Proxy",
+                        deploymentDate: "2020-05-31"
+                    },
+                    avalanche: {
+                        address: "0x5947BB275c521040051D82396192181b413227A3",
+                        implementation: "0x2B8F5FE78d766E64da8FC699A58EcB27E3e9a95E",
+                        type: "Transparent Proxy",
+                        deploymentDate: "2021-07-15"
+                    },
+                    arbitrum: {
+                        address: "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4",
+                        implementation: "0x2B8F5FE78d766E64da8FC699A58EcB27E3e9a95E",
+                        type: "Transparent Proxy",
+                        deploymentDate: "2021-08-31"
+                    }
+                },
+                security: {
+                    auditScore: 98,
+                    lastAudit: "2024-01",
+                    auditors: ["Trail of Bits", "OpenZeppelin"],
+                    vulnerabilitiesFixed: 0,
+                    criticalIssues: 0,
+                    features: {
+                        multisig: true,
+                        timelock: true,
+                        upgradeDelay: 48,
+                        emergencyPause: true,
+                        bugBounty: true
+                    }
+                },
+                implementation: {
+                    testCoverage: 98,
+                    staticAnalysis: {
+                        slither: "PASS",
+                        mythril: "PASS"
+                    },
+                    documentation: 95,
+                    sourceVerified: true,
+                    proxyPattern: "Transparent"
+                },
+                metrics: {
+                    gasEfficiency: 95,
+                    averageGasUsage: 150000,
+                    uptime: 99.999,
+                    responseTime: 35
+                }
+            },
+            pyth: {
+                name: "Pyth Network",
+                networks: {
+                    ethereum: {
+                        address: "0x4374c7cF70632e49d042E42c391D894a7D46Cc65",
+                        implementation: "0x0000000000000000000000000000000000000000",
+                        type: "UUPS Proxy",
+                        deploymentDate: "2022-08-22"
+                    },
+                    solana: {
+                        address: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+                        type: "Native Solana Program",
+                        deploymentDate: "2021-08-01"
+                    },
+                    bsc: {
+                        address: "0x4374c7cF70632e49d042E42c391D894a7D46Cc65",
+                        implementation: "0x0000000000000000000000000000000000000000",
+                        type: "UUPS Proxy",
+                        deploymentDate: "2022-09-15"
+                    },
+                    avalanche: {
+                        address: "0x4374c7cF70632e49d042E42c391D894a7D46Cc65",
+                        implementation: "0x0000000000000000000000000000000000000000",
+                        type: "UUPS Proxy",
+                        deploymentDate: "2022-10-01"
+                    }
+                },
+                security: {
+                    auditScore: 95,
+                    lastAudit: "2023-12",
+                    auditors: ["Kudelski", "Halborn"],
+                    vulnerabilitiesFixed: 1,
+                    criticalIssues: 0,
+                    features: {
+                        multisig: true,
+                        timelock: true,
+                        upgradeDelay: 24,
+                        emergencyPause: true,
+                        bugBounty: true
+                    }
+                },
+                implementation: {
+                    testCoverage: 92,
+                    staticAnalysis: {
+                        slither: "PASS",
+                        mythril: "WARNING"
+                    },
+                    documentation: 90,
+                    sourceVerified: true,
+                    proxyPattern: "UUPS"
+                },
+                metrics: {
+                    gasEfficiency: 90,
+                    averageGasUsage: 180000,
+                    uptime: 99.98,
+                    responseTime: 40
+                }
+            },
+            uma: {
+                name: "UMA Protocol",
+                networks: {
+                    ethereum: {
+                        address: "0x0f5A2cE25E0F4c77A23c9E6C2DDC0E066A750f37",
+                        implementation: "0x0000000000000000000000000000000000000000",
+                        type: "Optimistic Oracle",
+                        deploymentDate: "2020-06-18"
+                    },
+                    polygon: {
+                        address: "0x16E5ACe2B8a9DE5c42fCFd85d6EC5977f3F3329a",
+                        implementation: "0x0000000000000000000000000000000000000000",
+                        type: "Optimistic Oracle",
+                        deploymentDate: "2021-05-20"
+                    },
+                    optimism: {
+                        address: "0x072819Bb43B50E7A251c64411e7aA362ce82803B",
+                        implementation: "0x0000000000000000000000000000000000000000",
+                        type: "Optimistic Oracle",
+                        deploymentDate: "2021-12-15"
+                    }
+                },
+                security: {
+                    auditScore: 92,
+                    lastAudit: "2023-11",
+                    auditors: ["OpenZeppelin"],
+                    vulnerabilitiesFixed: 2,
+                    criticalIssues: 0,
+                    features: {
+                        multisig: true,
+                        timelock: true,
+                        upgradeDelay: 36,
+                        emergencyPause: true,
+                        bugBounty: true
+                    }
+                },
+                implementation: {
+                    testCoverage: 90,
+                    staticAnalysis: {
+                        slither: "WARNING",
+                        mythril: "PASS"
+                    },
+                    documentation: 85,
+                    sourceVerified: true,
+                    proxyPattern: "Custom"
+                },
+                metrics: {
+                    gasEfficiency: 85,
+                    averageGasUsage: 200000,
+                    uptime: 99.95,
+                    responseTime: 45
+                }
+            }
+        };
+
+        function calculateContractScore(oracle) {
+            try {
+                // Security Score (40%)
+                const securityScore = (
+                    (oracle.security.auditScore / 100 * 40) +
+                    (oracle.security.criticalIssues === 0 ? 20 : 0) +
+                    (Object.values(oracle.security.features).filter(f => f === true).length / 5 * 40)
+                ) * 0.4;
+
+                // Implementation Score (30%)
+                const implementationScore = (
+                    (oracle.implementation.testCoverage / 100 * 40) +
+                    (oracle.implementation.staticAnalysis.slither === "PASS" ? 30 : 15) +
+                    (oracle.implementation.staticAnalysis.mythril === "PASS" ? 30 : 15)
+                ) * 0.3;
+
+                // Operational Score (30%)
+                const operationalScore = (
+                    (oracle.metrics.gasEfficiency / 100 * 40) +
+                    ((100 - (oracle.metrics.averageGasUsage / 5000)) * 0.3) +
+                    (oracle.metrics.uptime >= 99.99 ? 30 : 15)
+                ) * 0.3;
+
+                // Total score out of 100
+                const totalScore = securityScore + implementationScore + operationalScore;
+                return Math.min(100, Math.round(totalScore));
+            } catch (error) {
+                console.error('Error calculating score:', error);
+                return 0;
+            }
+        }
+
+        function getScoreClass(score) {
+            if (score >= 90) return 'excellent';
+            if (score >= 75) return 'good';
+            return 'developing';
+        }
+
+        function createOracleCard(oracle) {
+            const score = calculateContractScore(oracle);
+            const card = document.createElement('div');
+            card.className = 'oracle-card';
+            
+            // Create network deployments HTML
+            const networkDeployments = Object.entries(oracle.networks)
+                .map(([network, details]) => `
+                    <div class="network-deployment">
+                        <strong style="color: var(--primary-color)">${network.charAt(0).toUpperCase() + network.slice(1)}:</strong>
+                        <div class="contract-address">
+                            <div>📍 Address: ${details.address}</div>
+                            ${details.implementation ? `<div>🔄 Implementation: ${details.implementation}</div>` : ''}
+                            <div>📋 Type: ${details.type}</div>
+                            <div>📅 Deployed: ${details.deploymentDate}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+            card.innerHTML = `
+                <h2 style="font-size: 1.75rem; margin-bottom: 20px; color: var(--primary-color);">${oracle.name}</h2>
+                
+                <div class="metrics-section">
+                    <h3 class="section-title">Network Deployments</h3>
+                    ${networkDeployments}
+                </div>
+
+                <div class="metrics-section">
+                    <div class="metric-row">
+                        <strong>Overall Security Score</strong>
+                        <span class="score ${getScoreClass(score)}">${score}/100</span>
+                    </div>
+                </div>
+
+                <div class="metrics-section">
+                    <h3 class="section-title">Security Analysis</h3>
+                    <div class="metric-row">
+                        <span>Audit Score</span>
+                        <span class="score ${getScoreClass(oracle.security.auditScore)}">
+                            ${oracle.security.auditScore}/100
+                        </span>
+                    </div>
+                    <div style="margin: 15px 0; color: var(--text-secondary);">
+                        <div>🕒 Last Audit: ${oracle.security.lastAudit}</div>
+                        <div>👥 Auditors: ${oracle.security.auditors.join(', ')}</div>
+                        <div>⚠️ Critical Issues: ${oracle.security.criticalIssues}</div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <div style="margin-bottom: 8px;">Security Features:</div>
+                        ${Object.entries(oracle.security.features).map(([feature, active]) => `
+                            <span class="feature-tag ${active ? 'active' : 'inactive'}">
+                                ${active ? '✓' : '×'} ${feature.charAt(0).toUpperCase() + feature.slice(1)}
+                            </span>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="metrics-section">
+                    <h3 class="section-title">Implementation Quality</h3>
+                    <div class="metric-row">
+                        <span>Test Coverage</span>
+                        <span class="score ${getScoreClass(oracle.implementation.testCoverage)}">
+                            ${oracle.implementation.testCoverage}%
+                        </span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Static Analysis</span>
+                        <div>
+                            <span class="feature-tag ${oracle.implementation.staticAnalysis.slither === 'PASS' ? 'active' : 'inactive'}">
+                                ${oracle.implementation.staticAnalysis.slither === 'PASS' ? '✓' : '×'} Slither
+                            </span>
+                            <span class="feature-tag ${oracle.implementation.staticAnalysis.mythril === 'PASS' ? 'active' : 'inactive'}">
+                                ${oracle.implementation.staticAnalysis.mythril === 'PASS' ? '✓' : '×'} Mythril
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metrics-section">
+                    <h3 class="section-title">Operational Metrics</h3>
+                    <div class="metric-row">
+                        <span>Gas Efficiency</span>
+                        <span class="score ${getScoreClass(oracle.metrics.gasEfficiency)}">
+                            ${oracle.metrics.gasEfficiency}/100
+                        </span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Average Gas Usage</span>
+                        <span>${oracle.metrics.averageGasUsage.toLocaleString()} gas</span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Uptime</span>
+                        <span>${oracle.metrics.uptime}%</span>
+                    </div>
+                    <div class="metric-row">
+                        <span>Response Time</span>
+                        <span>${oracle.metrics.responseTime}ms</span>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function initializeApp() {
+            const grid = document.getElementById('oracle-grid');
+            grid.innerHTML = '';
+            
+            Object.values(ORACLE_CONTRACTS).forEach(oracle => {
+                const card = createOracleCard(oracle);
+                grid.appendChild(card);
+            });
+        }
+
+        // Initialize when the page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html> 
+</html> 
