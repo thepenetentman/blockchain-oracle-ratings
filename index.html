@@ -585,9 +585,21 @@
             });
         }
 
-        // Initialize when the page loads
-        document.addEventListener('DOMContentLoaded', initializeApp);
+        document.addEventListener('DOMContentLoaded', function() {
+            try {
+                console.log('Initializing application...');
+                initializeApp();
+                console.log('Application initialized successfully');
+            } catch (error) {
+                console.error('Error initializing application:', error);
+                document.getElementById('oracle-grid').innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <h2>Loading Oracle Data...</h2>
+                        <p>If this message persists, please check the console for errors.</p>
+                    </div>
+                `;
+            }
+        });
     </script>
 </body>
-</html> 
 </html> 
