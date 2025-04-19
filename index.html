@@ -491,18 +491,16 @@
                 `).join('');
 
             card.innerHTML = `
-                <h2 style="font-size: 1.75rem; margin-bottom: 20px; color: var(--primary-color);">${oracle.name}</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="font-size: 1.75rem; color: var(--primary-color); margin: 0;">${oracle.name}</h2>
+                    <div class="metric-row" style="margin: 0;">
+                        <span class="score ${getScoreClass(score)}" style="font-size: 1.1rem;">${score}/100</span>
+                    </div>
+                </div>
                 
                 <div class="metrics-section">
                     <h3 class="section-title">Network Deployments</h3>
                     ${networkDeployments}
-                </div>
-
-                <div class="metrics-section">
-                    <div class="metric-row">
-                        <strong>Overall Security Score</strong>
-                        <span class="score ${getScoreClass(score)}">${score}/100</span>
-                    </div>
                 </div>
 
                 <div class="metrics-section">
